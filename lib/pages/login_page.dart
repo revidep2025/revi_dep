@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:revi_dep/data/auth_service.dart';
 import '../core/theme.dart';
 import 'register_page.dart';
-import 'home_page.dart'; // Asegúrate que este import apunte al archivo correcto
+import 'home_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -12,39 +12,40 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final _codigoController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passController = TextEditingController();
 
   final _authService = AuthService();
 
   void _login() async {
-    // Simula login real con Supabase u otro backend
-    final success = await _authService.loginUser(
-      codigoEstudiante: _codigoController.text,
-      password: _passController.text,
+    final result = await _authService.loginUser(
+      email: _emailController.text.trim(),
+      password: _passController.text.trim(),
     );
 
-    if (success) {
+    if (result != null) {
+      final user = result['user'];
+      final profile = result['profile'];
+
+      final String? roleName = profile?['role']?['name'];
+      final String? realEstateName = profile?['real_estate_company']?['name'];
+
+      print('✅ Login exitoso');
+      print('Email: ${user.email}');
+      print('Rol: ${roleName ?? "No definido"}');
+      print('Inmobiliaria: ${realEstateName ?? "No definida"}');
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Bienvenido')),
       );
 
-      // 👉 ACCESO CON LOGIN EXITOSO
-      // Aquí irás directamente al HomePage
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const HomePage()),
       );
     } else {
-      // 👎 CREDENCIALES INCORRECTAS
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Credenciales incorrectas')),
-      );
-
-      // 👉 OPCIÓN TEMPORAL: Acceder igual al Home para test
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const HomePage()),
       );
     }
   }
@@ -79,19 +80,12 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
             const SizedBox(height: 40),
-            const Text(
-              "CÓDIGO DE ESTUDIANTE",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
-                color: Colors.grey,
-              ),
-            ),
+            const Text("EMAIL", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.grey)),
             const SizedBox(height: 8),
             TextField(
-              controller: _codigoController,
+              controller: _emailController,
               decoration: InputDecoration(
-                hintText: "u20211xxxx",
+                hintText: "correo@ejemplo.com",
                 filled: true,
                 fillColor: const Color(0xFFF5F5F5),
                 border: OutlineInputBorder(
@@ -101,14 +95,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
             const SizedBox(height: 20),
-            const Text(
-              "CONTRASEÑA",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
-                color: Colors.grey,
-              ),
-            ),
+            const Text("CONTRASEÑA", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.grey)),
             const SizedBox(height: 8),
             TextField(
               controller: _passController,
@@ -136,28 +123,17 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
                 onPressed: _login,
-                child: const Text(
-                  "Iniciar Sesión",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
+                child: const Text("Iniciar Sesión", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ),
             const SizedBox(height: 20),
             Center(
               child: TextButton(
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const RegisterPage()),
-                  );
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterPage()));
                 },
-                child: const Text(
-                  "¿No tienes cuenta? Inscribirse",
-                  style: TextStyle(
-                    color: Colors.blueAccent,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
+                child: const Text("¿No tienes cuenta? Inscribirse",
+                  style: TextStyle(color: Colors.blueAccent, fontSize: 14, fontWeight: FontWeight.w500),
                 ),
               ),
             ),

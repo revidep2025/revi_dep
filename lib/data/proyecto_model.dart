@@ -7,6 +7,7 @@ class Project {
   final String imageUrl;
   final String description;
   final String location;
+  final String realEstateCompanyId;
 
   Project({
     required this.id,
@@ -15,6 +16,7 @@ class Project {
     required this.imageUrl,
     required this.description,
     required this.location,
+    required this.realEstateCompanyId
   });
 
   /// Crea una instancia de [Project] a partir del JSON que retorna Supabase.
@@ -26,6 +28,7 @@ class Project {
       imageUrl: json['image_url'] ?? '',
       description: json['description'] ?? 'Sin descripción',
       location: json['location'] ?? 'Sin ubicación',
+      realEstateCompanyId: json['real_estate_company_id'] ?? '',
     );
   }
 
@@ -38,6 +41,7 @@ class Project {
       'image_url': imageUrl,
       'description': description,
       'location': location,
+      'real_estate_company_id': realEstateCompanyId,
     };
   }
 }

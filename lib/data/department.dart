@@ -16,14 +16,15 @@ class Department {
   });
 
   factory Department.fromJson(Map<String, dynamic> json) => Department(
-    id: json['id'],
+    id: json['id']?.toString() ?? '',
     unitCode: json['unit_code'],
-    createdAt: DateTime.parse(json['created_at']),
-    planImageUrl: json['plan_image_url'],
-    projectId: json['project_id'],
+    createdAt:  DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
+    planImageUrl: json['plan_image_url']?? '',
+    projectId: json['project_id']?? '',
   );
 
   Map<String, dynamic> toJson() => {
+    'id': id,
     'unit_code': unitCode,
     'created_at': createdAt.toIso8601String(),
     'plan_image_url': planImageUrl,

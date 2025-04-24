@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:revi_dep/data/department.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'department_detail_page.dart';
 
 import 'create_department_page.dart';
 
@@ -91,23 +92,34 @@ class _DepartmentPageState extends State<DepartmentPage> {
                     itemCount: _filteredDepartments().length,
                     itemBuilder: (_, index) {
                       final dept = _filteredDepartments()[index];
-                      return Container(
-                        decoration: BoxDecoration(
-                          color: Colors.red.shade300, // Color por defecto: rojo
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Center(
-                          child: Text(
-                            'Unidad ${dept.unitCode}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => DepartmentDetailPage(department: dept),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade300,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Center(
+                            child: Text(
+                              'Unidad ${dept.unitCode}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
                       );
                     },
+
                   ),
                 ),
               ],

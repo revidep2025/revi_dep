@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../core/theme.dart';
 import '../data/auth_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -10,32 +12,37 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-  final _nombreController = TextEditingController();
-  final _apellidoController = TextEditingController();
-  final _codigoController = TextEditingController();
-  final _passController = TextEditingController();
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _companyController = TextEditingController();
 
   final _authService = AuthService();
 
-  void _register() async {
-    final error = await _authService.registerUser(
-      nombre: _nombreController.text,
-      apellido: _apellidoController.text,
-      codigoEstudiante: _codigoController.text,
-      password: _passController.text,
-    );
+  void _registerCompany() async {
+  final email = _emailController.text.trim();
+  final password = _passwordController.text.trim();
+  final companyName = _companyController.text.trim();
 
-    if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error en el registro')),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Registro exitoso')),
-      );
-      Navigator.pop(context); // Vuelve a Login
-    }
+  final result = await _authService.registerRootRealEstateCompany(
+    email: email,
+    password: password,
+    companyName: companyName,
+    logoImageUrl: '', // Puedes usar file picker después para permitir subir logo
+  );
+
+  if (result == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Inmobiliaria registrada con éxito')),
+    );
+    Navigator.pop(context);
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error: $result')),
+    );
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +55,7 @@ class _RegisterPageState extends State<RegisterPage> {
             const SizedBox(height: 80),
             Center(
               child: Text(
-                "Crear Nueva Cuenta",
+                "Registrar Inmobiliaria",
                 style: TextStyle(
                   color: AppColors.verdeClaro,
                   fontSize: 28,
@@ -56,105 +63,14 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
               ),
             ),
-            const SizedBox(height: 8),
-            Center(
-              child: Text(
-                "¿Ya tienes una cuenta? Inicia sesión aquí",
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 14,
-                ),
-              ),
-            ),
             const SizedBox(height: 30),
-            const Text(
-              "NOMBRE",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
-                color: Colors.grey,
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _nombreController,
-              decoration: InputDecoration(
-                hintText: "Juan",
-                filled: true,
-                fillColor: const Color(0xFFF5F5F5),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
+            _buildTextField("NOMBRE COMPLETO", _nameController, hint: "Juan Pérez"),
             const SizedBox(height: 15),
-            const Text(
-              "APELLIDO",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
-                color: Colors.grey,
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _apellidoController,
-              decoration: InputDecoration(
-                hintText: "Pérez",
-                filled: true,
-                fillColor: const Color(0xFFF5F5F5),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
+            _buildTextField("EMAIL EMPRESARIAL", _emailController, hint: "empresa@ejemplo.com"),
             const SizedBox(height: 15),
-            const Text(
-              "CÓDIGO DE ESTUDIANTE",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
-                color: Colors.grey,
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _codigoController,
-              decoration: InputDecoration(
-                hintText: "u20211xxxx",
-                filled: true,
-                fillColor: const Color(0xFFF5F5F5),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
+            _buildTextField("NOMBRE DE LA INMOBILIARIA", _companyController, hint: "Mi Inmobiliaria SAC"),
             const SizedBox(height: 15),
-            const Text(
-              "CONTRASEÑA",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
-                color: Colors.grey,
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _passController,
-              obscureText: true,
-              decoration: InputDecoration(
-                hintText: "••••••••",
-                filled: true,
-                fillColor: const Color(0xFFF5F5F5),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
+            _buildTextField("CONTRASEÑA", _passwordController, hint: "••••••••", obscure: true),
             const SizedBox(height: 30),
             SizedBox(
               width: double.infinity,
@@ -167,7 +83,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                onPressed: _register,
+                onPressed: _registerCompany,
                 child: const Text(
                   "Registrarse",
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -177,6 +93,34 @@ class _RegisterPageState extends State<RegisterPage> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildTextField(String label, TextEditingController controller, {String hint = '', bool obscure = false}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+              color: Colors.grey,
+            )),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          obscureText: obscure,
+          decoration: InputDecoration(
+            hintText: hint,
+            filled: true,
+            fillColor: const Color(0xFFF5F5F5),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide.none,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

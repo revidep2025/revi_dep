@@ -16,8 +16,10 @@ class _CrearProyectoPageState extends State<CrearProyectoPage> {
   final _descripcionController = TextEditingController();
   final _ubicacionController = TextEditingController(); // NUEVO CAMPO
   File? _imagen;
+ 
 
   final SupabaseClient supabase = Supabase.instance.client;
+   String? get _userId => supabase.auth.currentUser?.id;
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -37,6 +39,14 @@ class _CrearProyectoPageState extends State<CrearProyectoPage> {
     return;
   }
 
+
+  if (_userId == null) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(content: Text("Usuario no autenticado")),
+  );
+  return;
+}
+
   try {
     // 1. Insertar el proyecto sin imagen
     final responseInsert = await supabase.from('projects').insert({
@@ -44,6 +54,7 @@ class _CrearProyectoPageState extends State<CrearProyectoPage> {
       'description': _descripcionController.text,
       'location': _ubicacionController.text,
       'image_url': null, // inicialmente null
+      'real_estate_company_id':  _userId,
     }).select().single(); // usamos `.single()` para obtener el objeto insertado
 
     final projectId = responseInsert['id']; // ID del proyecto insertado
@@ -56,12 +67,12 @@ class _CrearProyectoPageState extends State<CrearProyectoPage> {
 
       // Subir imagen
       await supabase.storage
-          .from('proyectos_imagenes')
+          .from('project-images')
           .upload(storagePath, _imagen!);
 
       // Obtener URL pública
       final imageUrl = supabase.storage
-          .from('proyectos_imagenes')
+          .from('project-images')
           .getPublicUrl(storagePath);
 
       // Actualizar el proyecto con la URL
@@ -87,40 +98,77 @@ class _CrearProyectoPageState extends State<CrearProyectoPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Nuevo Proyecto")),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: ListView(
-          children: [
-            TextField(
-              controller: _nombreController,
-              decoration: const InputDecoration(labelText: "Nombre del Proyecto"),
+          body: Center(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    TextField(
+                      controller: _nombreController,
+                      decoration: const InputDecoration(labelText: "Nombre del Proyecto"),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _descripcionController,
+                      decoration: const InputDecoration(labelText: "Descripción"),
+                      maxLines: 3,
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _ubicacionController,
+                      decoration: const InputDecoration(labelText: "Ubicación"),
+                    ),
+                    const SizedBox(height: 20),
+                    GestureDetector(
+                      onTap: _pickImage,
+                      child: _imagen != null
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.file(_imagen!, height: 150),
+                            )
+                          : Container(
+                              height: 150,
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade200,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.grey),
+                              ),
+                              child: const Center(
+                                child: Text(
+                                  "Sube una imagen del proyecto",
+                                  style: TextStyle(color: Colors.grey),
+                                ),
+                              ),
+                            ),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: _pickImage,
+                      icon: const Icon(Icons.image),
+                      label: const Text("Elegir Imagen desde Galería"),
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _saveProyecto,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        child: const Text("Guardar Proyecto"),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-            TextField(
-              controller: _descripcionController,
-              decoration: const InputDecoration(labelText: "Descripción"),
-              maxLines: 3,
-            ),
-            TextField(
-              controller: _ubicacionController,
-              decoration: const InputDecoration(labelText: "Ubicación"),
-            ),
-            const SizedBox(height: 12),
-            _imagen != null
-                ? Image.file(_imagen!, height: 120)
-                : const Placeholder(fallbackHeight: 120),
-            ElevatedButton(
-              onPressed: _pickImage,
-              child: const Text("Elegir Imagen desde Galería"),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _saveProyecto,
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-              child: const Text("Guardar Proyecto"),
-            ),
-          ],
-        ),
-      ),
+          ),
+
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:revi_dep/pages/crear_proyecto_page.dart';
+import 'package:revi_dep/pages/create_internal_user_page.dart';
 import 'package:revi_dep/pages/department_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../data/proyecto_model.dart';
@@ -46,6 +47,13 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  void _goToCreateTrabajador() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const CreateInternalUserPage()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -54,29 +62,14 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: Colors.white,
         foregroundColor: Colors.green,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : proyectos.isEmpty
-              ? Center(child: Text(_errorMsg ?? "No hay proyectos disponibles"))
-              : ListView.builder(
-                  padding: const EdgeInsets.all(12),
-                  itemCount: proyectos.length,
-                  itemBuilder: (_, i) => ProyectoCard(
-                    proyecto: proyectos[i],
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => DepartmentPage(
-                            projectId: proyectos[i].id
-                            
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
+
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
           await Navigator.push(
@@ -89,8 +82,60 @@ class _HomePageState extends State<HomePage> {
         icon: const Icon(Icons.add),
         backgroundColor: Colors.green,
       ),
+
+      body: Column(
+        children: [
+          // Botón de crear trabajador justo debajo del título
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton.icon(
+                onPressed: _goToCreateTrabajador,
+                icon: const Icon(Icons.person_add_alt_1),
+                label: const Text(
+                  "Crear trabajador",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green.shade600,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          // Lista de proyectos
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : proyectos.isEmpty
+                    ? Center(child: Text(_errorMsg ?? "No hay proyectos disponibles"))
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(12),
+                        itemCount: proyectos.length,
+                        itemBuilder: (_, i) => ProyectoCard(
+                          proyecto: proyectos[i],
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => DepartmentPage(
+                                  projectId: proyectos[i].id,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+          ),
+        ],
+      ),
     );
   }
 }
-
-

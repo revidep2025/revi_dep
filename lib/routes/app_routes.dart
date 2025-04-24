@@ -5,5 +5,5 @@ import '../pages/register_page.dart';
 
 Map<String, WidgetBuilder> appRoutes = {
   '/': (context) => const LoginPage(),
-  '/register': (context) => const RegisterPage(),
+  //'/register': (context) => const RegisterPage(),
 };
