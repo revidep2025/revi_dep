@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:revi_dep/data/department.dart';
+import 'package:revi_dep/models/department_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'department_detail_page.dart';
 

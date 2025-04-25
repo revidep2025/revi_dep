@@ -1,6 +1,6 @@
 // department_detail_page.dart
 import 'package:flutter/material.dart';
-import 'package:revi_dep/data/department.dart';
+import 'package:revi_dep/models/department_model.dart';
 
 class DepartmentDetailPage extends StatelessWidget {
   final Department department;

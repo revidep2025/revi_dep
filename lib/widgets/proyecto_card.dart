@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../data/proyecto_model.dart';
+import '../models/proyecto_model.dart';
 
 class ProyectoCard extends StatelessWidget {
   final Project proyecto;

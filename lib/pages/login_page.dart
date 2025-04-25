@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:revi_dep/data/auth_service.dart';
+import 'package:revi_dep/services/auth_service.dart';
 import '../core/theme.dart';
 import 'register_page.dart';
 import 'home_page.dart';
@@ -18,23 +18,13 @@ class _LoginPageState extends State<LoginPage> {
   final _authService = AuthService();
 
   void _login() async {
-    final result = await _authService.loginUser(
-      email: _emailController.text.trim(),
-      password: _passController.text.trim(),
-    );
-
-    if (result != null) {
-      final user = result['user'];
-      final profile = result['profile'];
-
-      final String? roleName = profile?['role']?['name'];
-      final String? realEstateName = profile?['real_estate_company']?['name'];
+    try {
+      await _authService.loginUser(
+        email: _emailController.text.trim(),
+        password: _passController.text.trim(),
+      );
 
       print('✅ Login exitoso');
-      print('Email: ${user.email}');
-      print('Rol: ${roleName ?? "No definido"}');
-      print('Inmobiliaria: ${realEstateName ?? "No definida"}');
-
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Bienvenido')),
       );
@@ -43,7 +33,7 @@ class _LoginPageState extends State<LoginPage> {
         context,
         MaterialPageRoute(builder: (_) => const HomePage()),
       );
-    } else {
+    } catch (_) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Credenciales incorrectas')),
       );
@@ -80,7 +70,11 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
             const SizedBox(height: 40),
-            const Text("EMAIL", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.grey)),
+            const Text("EMAIL",
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: Colors.grey)),
             const SizedBox(height: 8),
             TextField(
               controller: _emailController,
@@ -95,7 +89,11 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
             const SizedBox(height: 20),
-            const Text("CONTRASEÑA", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.grey)),
+            const Text("CONTRASEÑA",
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: Colors.grey)),
             const SizedBox(height: 8),
             TextField(
               controller: _passController,
@@ -123,17 +121,24 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
                 onPressed: _login,
-                child: const Text("Iniciar Sesión", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                child: const Text("Iniciar Sesión",
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ),
             const SizedBox(height: 20),
             Center(
               child: TextButton(
                 onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterPage()));
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (_) => const RegisterPage()));
                 },
-                child: const Text("¿No tienes cuenta? Inscribirse",
-                  style: TextStyle(color: Colors.blueAccent, fontSize: 14, fontWeight: FontWeight.w500),
+                child: const Text(
+                  "¿No tienes cuenta? Inscribirse",
+                  style: TextStyle(
+                      color: Colors.blueAccent,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500),
                 ),
               ),
             ),

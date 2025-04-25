@@ -3,7 +3,7 @@ import 'package:revi_dep/pages/crear_proyecto_page.dart';
 import 'package:revi_dep/pages/create_internal_user_page.dart';
 import 'package:revi_dep/pages/department_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../data/proyecto_model.dart';
+import '../models/proyecto_model.dart';
 import '../widgets/proyecto_card.dart';
 
 class HomePage extends StatefulWidget {

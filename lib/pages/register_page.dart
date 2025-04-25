@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import '../core/theme.dart';
-import '../data/auth_service.dart';
+import '../services/auth_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -20,29 +19,29 @@ class _RegisterPageState extends State<RegisterPage> {
   final _authService = AuthService();
 
   void _registerCompany() async {
-  final email = _emailController.text.trim();
-  final password = _passwordController.text.trim();
-  final companyName = _companyController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    final fullName = _nameController.text.trim(); // <-- nuevo: nombre del dueño
+    final companyName = _companyController.text.trim();
 
-  final result = await _authService.registerRootRealEstateCompany(
-    email: email,
-    password: password,
-    companyName: companyName,
-    logoImageUrl: '', // Puedes usar file picker después para permitir subir logo
-  );
+    try {
+      await _authService.registerRealEstateCompany(
+        email: email,
+        password: password,
+        companyName: companyName,
+        userFullName: fullName, // <-- se pasa el nombre del dueño
+      );
 
-  if (result == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Inmobiliaria registrada con éxito')),
-    );
-    Navigator.pop(context);
-  } else {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error: $result')),
-    );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Inmobiliaria registrada con éxito')),
+      );
+      Navigator.pop(context);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -64,13 +63,17 @@ class _RegisterPageState extends State<RegisterPage> {
               ),
             ),
             const SizedBox(height: 30),
-            _buildTextField("NOMBRE COMPLETO", _nameController, hint: "Juan Pérez"),
+            _buildTextField("NOMBRE COMPLETO", _nameController,
+                hint: "Juan Pérez"),
             const SizedBox(height: 15),
-            _buildTextField("EMAIL EMPRESARIAL", _emailController, hint: "empresa@ejemplo.com"),
+            _buildTextField("EMAIL EMPRESARIAL", _emailController,
+                hint: "empresa@ejemplo.com"),
             const SizedBox(height: 15),
-            _buildTextField("NOMBRE DE LA INMOBILIARIA", _companyController, hint: "Mi Inmobiliaria SAC"),
+            _buildTextField("NOMBRE DE LA INMOBILIARIA", _companyController,
+                hint: "Mi Inmobiliaria SAC"),
             const SizedBox(height: 15),
-            _buildTextField("CONTRASEÑA", _passwordController, hint: "••••••••", obscure: true),
+            _buildTextField("CONTRASEÑA", _passwordController,
+                hint: "••••••••", obscure: true),
             const SizedBox(height: 30),
             SizedBox(
               width: double.infinity,
@@ -96,7 +99,8 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, {String hint = '', bool obscure = false}) {
+  Widget _buildTextField(String label, TextEditingController controller,
+      {String hint = '', bool obscure = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
