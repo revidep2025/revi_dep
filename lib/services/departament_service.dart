@@ -29,8 +29,25 @@ class DepartmentService {
     }
   }
 
+  Future<List<Map<String, dynamic>>> getDepartamentById({
+    required String departmentId,
+  }) async {
+    try {
+      final response = await supabase
+          .from('departaments')
+          .select('*')
+          .eq('id', departmentId);
+
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e, stack) {
+      print('Error al obtener departament: $e');
+      print('Stack trace: $stack');
+      rethrow;
+    }
+  }
+
   // Obtener departamentos por proyecto, opcionalmente filtrando por piso
-  Future<List<Map<String, dynamic>>> getDepartmentsByProjectAndFloor({
+  Future<List<Map<String, dynamic>>> getAllDepartmentsByProjectAndFloor({
     required String projectId,
     required int? floor,
   }) async {

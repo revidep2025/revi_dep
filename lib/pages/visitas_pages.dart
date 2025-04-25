@@ -28,7 +28,7 @@ class _VisitasPageState extends State<VisitasPage> {
 
   Future<void> _loadVisits() async {
     try {
-      final data = await _visitService.getVisitsByObservation(
+      final data = await _visitService.getAllVisitsByObservation(
         observationId: widget.observationId,
       );
       setState(() => visits = data);

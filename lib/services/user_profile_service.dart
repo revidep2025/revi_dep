@@ -6,22 +6,23 @@ class UserProfileService {
 
   // Crear un nuevo perfil de usuario
   Future<Map<String, dynamic>> createUserProfile({
-    required String userId,
+    required String userProfileId,
     required String roleId,
     required String fullName,
     required String realEstateCompanyId,
   }) async {
     try {
-      final response = await supabase
-          .from('user_profiles')
-          .insert({
-            'id': userId,
-            'role_id': roleId,
-            'full_name': fullName,
-            'real_estate_company_id': realEstateCompanyId,
-          })
-          .select()
-          .single();
+      final response =
+          await supabase
+              .from('user_profiles')
+              .insert({
+                'id': userProfileId,
+                'role_id': roleId,
+                'full_name': fullName,
+                'real_estate_company_id': realEstateCompanyId,
+              })
+              .select()
+              .single();
 
       return response;
     } catch (e, stack) {
@@ -31,8 +32,25 @@ class UserProfileService {
     }
   }
 
+  Future<List<Map<String, dynamic>>> getUserProfilesById({
+    required String userProfileId,
+  }) async {
+    try {
+      final response = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('id', userProfileId);
+
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e, stack) {
+      print('Error al obtener profile: $e');
+      print('Stack trace: $stack');
+      rethrow;
+    }
+  }
+
   // Obtener perfiles filtrados por empresa
-  Future<List<Map<String, dynamic>>> getUserProfilesByCompany({
+  Future<List<Map<String, dynamic>>> getAllUserProfilesByCompany({
     required String realEstateCompanyId,
   }) async {
     try {
@@ -49,7 +67,7 @@ class UserProfileService {
     }
   }
 
-  Future<List<Map<String, dynamic>>> getUserProfilesByProject({
+  Future<List<Map<String, dynamic>>> getAllUserProfilesByProject({
     required String projectId,
   }) async {
     try {
@@ -68,7 +86,7 @@ class UserProfileService {
 
   // Actualizar perfil de usuario
   Future<Map<String, dynamic>> updateUserProfile({
-    required String userId,
+    required String userProfileId,
     required String? fullName,
     required String? roleId,
   }) async {
@@ -77,12 +95,13 @@ class UserProfileService {
       if (fullName != null) data['full_name'] = fullName;
       if (roleId != null) data['role_id'] = roleId;
 
-      final response = await supabase
-          .from('user_profiles')
-          .update(data)
-          .eq('id', userId)
-          .select()
-          .single();
+      final response =
+          await supabase
+              .from('user_profiles')
+              .update(data)
+              .eq('id', userProfileId)
+              .select()
+              .single();
 
       return response;
     } catch (e, stack) {
@@ -93,10 +112,12 @@ class UserProfileService {
   }
 
   // Eliminar perfil de usuario
-  Future<bool> deleteUserProfile({required String userId}) async {
+  Future<bool> deleteUserProfile({required String userProfileId}) async {
     try {
-      final response =
-          await supabase.from('user_profiles').delete().eq('id', userId);
+      final response = await supabase
+          .from('user_profiles')
+          .delete()
+          .eq('id', userProfileId);
 
       if (response == null || (response is List && response.isEmpty)) {
         throw Exception('No se encontró el perfil a eliminar.');

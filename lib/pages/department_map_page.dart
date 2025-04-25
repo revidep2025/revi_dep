@@ -28,7 +28,7 @@ class _DepartmentMapPageState extends State<DepartmentMapPage> {
 
   Future<void> _loadObservations() async {
     try {
-      final data = await _obsService.getObservationsByDepartment(widget.departmentId);
+      final data = await _obsService.getAllObservationsByDepartment(widget.departmentId);
       print('📍 Cargadas ${data.length} observaciones');
       for (final o in data) {
         print('🧭 Observación: x=${o.x}, y=${o.y}, estado=${o.status}');

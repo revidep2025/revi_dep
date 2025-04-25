@@ -5,7 +5,7 @@ class RealEstateCompanyService {
   final SupabaseClient supabase = Supabase.instance.client;
 
   // Crear una nueva empresa inmobiliaria y retornar la empresa creada
-  Future<Map<String, dynamic>> createCompany({
+  Future<Map<String, dynamic>> createRealEstateCompany({
     required String name,
     required String? logoImageUrl,
   }) async {
@@ -27,8 +27,25 @@ class RealEstateCompanyService {
     }
   }
 
+  Future<List<Map<String, dynamic>>> getRealEstateCompanyById({
+    required String realEstateCompanyId,
+  }) async {
+    try {
+      final response = await supabase
+          .from('real_estate_companies')
+          .select('*')
+          .eq('id', realEstateCompanyId);
+
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e, stack) {
+      print('Error al obtener company: $e');
+      print('Stack trace: $stack');
+      rethrow;
+    }
+  }
+
   // Obtener todas las empresas inmobiliarias
-  Future<List<Map<String, dynamic>>> getAllCompanies() async {
+  Future<List<Map<String, dynamic>>> getAllRealEstateCompanies() async {
     try {
       final response = await supabase.from('real_estate_companies').select('*');
 
@@ -41,8 +58,8 @@ class RealEstateCompanyService {
   }
 
   // Actualizar una empresa inmobiliaria y retornar la empresa actualizada
-  Future<Map<String, dynamic>> updateCompany({
-    required String companyId,
+  Future<Map<String, dynamic>> updateRealEstateCompany({
+    required String realEstateCompanyId,
     required String? name,
     required String? logoImageUrl,
   }) async {
@@ -54,7 +71,7 @@ class RealEstateCompanyService {
       final response = await supabase
           .from('real_estate_companies')
           .update(data)
-          .eq('id', companyId)
+          .eq('id', realEstateCompanyId)
           .select()
           .single();
 
@@ -67,12 +84,13 @@ class RealEstateCompanyService {
   }
 
   // Eliminar una empresa inmobiliaria y retornar true si fue exitoso
-  Future<bool> deleteCompany({required String companyId}) async {
+  Future<bool> deleteRealEstateCompany(
+      {required String realEstateCompanyId}) async {
     try {
       final response = await supabase
           .from('real_estate_companies')
           .delete()
-          .eq('id', companyId);
+          .eq('id', realEstateCompanyId);
 
       // Opcional para validar eliminación
       if (response == null || (response is List && response.isEmpty)) {
@@ -82,25 +100,6 @@ class RealEstateCompanyService {
       return true;
     } catch (e, stack) {
       print('Error al eliminar empresa inmobiliaria: $e');
-      print('Stack trace: $stack');
-      rethrow;
-    }
-  }
-
-  // Obtener empresas inmobiliarias por usuario (asumiendo relación en auth.users)
-  Future<List<Map<String, dynamic>>> getCompanyByUser(
-      {required String userId}) async {
-    try {
-      // Esto depende de cómo esté estructurada tu relación entre usuarios y empresas
-      // Ejemplo básico - ajusta según tu esquema real
-      final response = await supabase
-          .from('real_estate_companies')
-          .select('*')
-          .eq('user_id', userId); // Ajusta este campo según tu esquema
-
-      return List<Map<String, dynamic>>.from(response);
-    } catch (e, stack) {
-      print('Error al obtener empresas por usuario: $e');
       print('Stack trace: $stack');
       rethrow;
     }

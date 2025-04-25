@@ -21,8 +21,26 @@ class ObservationService {
     }
   }
 
+  Future<List<Map<String, dynamic>>> getObservationById({
+    required String observationId,
+  }) async {
+    try {
+      final response = await supabase
+          .from('observations')
+          .select('*')
+          .eq('id', observationId);
+
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e, stack) {
+      print('Error al obtener observation: $e');
+      print('Stack trace: $stack');
+      rethrow;
+    }
+  }
+
   /// Obtener observaciones por departamento
-  Future<List<Observation>> getObservationsByDepartment(String departmentId) async {
+  Future<List<Observation>> getAllObservationsByDepartment(
+      String departmentId) async {
     try {
       final response = await supabase
           .from('observations')
@@ -71,10 +89,8 @@ class ObservationService {
   /// Eliminar una observación
   Future<bool> deleteObservation(String observationId) async {
     try {
-      final response = await supabase
-          .from('observations')
-          .delete()
-          .eq('id', observationId);
+      final response =
+          await supabase.from('observations').delete().eq('id', observationId);
 
       return true;
     } catch (e, stack) {
@@ -85,7 +101,8 @@ class ObservationService {
   }
 
   /// Obtener el último estado de una observación por departamento (para el color del bloque)
-  Future<ObservationStatus?> getLatestObservationStatus(String departmentId) async {
+  Future<ObservationStatus?> getLatestObservationStatus(
+      String departmentId) async {
     try {
       final response = await supabase
           .from('observations')

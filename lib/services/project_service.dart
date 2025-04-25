@@ -33,8 +33,25 @@ class ProjectService {
     }
   }
 
+  Future<List<Map<String, dynamic>>> getProjectById({
+    required String projectId,
+  }) async {
+    try {
+      final response = await supabase
+          .from('projects')
+          .select('*')
+          .eq('id', projectId);
+
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e, stack) {
+      print('Error al obtener project: $e');
+      print('Stack trace: $stack');
+      rethrow;
+    }
+  }
+
   // Obtener proyectos filtrados por empresa
-  Future<List<Map<String, dynamic>>> getProjectsByCompany({
+  Future<List<Map<String, dynamic>>> getAllProjectsByRealEstateCompany({
     required String realEstateCompanyId,
   }) async {
     try {
@@ -51,7 +68,7 @@ class ProjectService {
     }
   }
 
-  Future<List<Map<String, dynamic>>> getProjectsByUserProfile({
+  Future<List<Map<String, dynamic>>> getAllProjectsByUserProfile({
     required String userProfileId,
   }) async {
     try {

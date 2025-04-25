@@ -68,17 +68,35 @@ class SubcontractorService {
     }
   }
 
-  Future<List<Map<String, dynamic>>> getSubcontractorsByWorkItem({
+  Future<List<Map<String, dynamic>>> getSubcontractorById({
+    required String subcontractorId,
+  }) async {
+    try {
+      final response = await supabase
+          .from('subcontractors')
+          .select('*')
+          .eq('id', subcontractorId);
+
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e, stack) {
+      print('Error al obtener subcontractor: $e');
+      print('Stack trace: $stack');
+      rethrow;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getAllSubcontractorsByWorkItemAndProject({
     required String workItemId,
+    required String projectId
   }) async {
     try {
       final response = await supabase.rpc(
-        'get_subcontractors_by_work_item',
-        params: {'work_item_id': workItemId},
+        'get_subcontractors_by_work_item_and_project',
+        params: {'work_item_id': workItemId, 'project_id': projectId},
       );
       return List<Map<String, dynamic>>.from(response);
     } catch (e, stack) {
-      print('Error al obtener subcontractors por work item: $e');
+      print('Error al obtener subcontractors por work item y proyecto: $e');
       print('Stack trace: $stack');
       rethrow;
     }

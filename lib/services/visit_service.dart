@@ -58,10 +58,7 @@ class VisitService {
 
   Future<bool> deleteVisit({required String visitId}) async {
     try {
-      final response = await supabase
-          .from('visits')
-          .delete()
-          .eq('id', visitId);
+      final response = await supabase.from('visits').delete().eq('id', visitId);
 
       if (response == null || (response is List && response.isEmpty)) {
         throw Exception('No se encontró la visita a eliminar.');
@@ -75,7 +72,23 @@ class VisitService {
     }
   }
 
-  Future<List<Map<String, dynamic>>> getVisitsByObservation({required String observationId}) async {
+  Future<List<Map<String, dynamic>>> getVisitById({
+    required String visitId,
+  }) async {
+    try {
+      final response =
+          await supabase.from('visits').select('*').eq('id', visitId);
+
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e, stack) {
+      print('Error al obtener visit: $e');
+      print('Stack trace: $stack');
+      rethrow;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getAllVisitsByObservation(
+      {required String observationId}) async {
     try {
       final response = await supabase
           .from('visits')
