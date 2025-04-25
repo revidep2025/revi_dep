@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:revi_dep/models/department_model.dart';
+import 'package:revi_dep/pages/department_map_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'department_detail_page.dart';
 
 import 'create_department_page.dart';
 
@@ -97,7 +97,10 @@ class _DepartmentPageState extends State<DepartmentPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => DepartmentDetailPage(department: dept),
+                              builder: (_) => DepartmentMapPage(
+                                    departmentId: dept.id,
+                                    imageUrl: dept.planImageUrl,
+                                  ),
                             ),
                           );
                         },

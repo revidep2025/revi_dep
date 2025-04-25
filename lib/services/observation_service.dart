@@ -1,35 +1,19 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../models/observation_model.dart';
 
 class ObservationService {
   final SupabaseClient supabase = Supabase.instance.client;
 
-  Future<Map<String, dynamic>> createObservation({
-    required String? imageUrl,
-    required String description,
-    required String environmentId,
-    required String subcontractorWorkItemId,
-    required String departmentId,
-    required int environmentNumber,
-    required DateTime expiresAt,
-    required DateTime? confirmedAt,
-  }) async {
+  /// Crear una observación desde modelo
+  Future<Observation> createObservation(Observation obs) async {
     try {
       final response = await supabase
           .from('observations')
-          .insert({
-            'image_url': imageUrl,
-            'description': description,
-            'environment_id': environmentId,
-            'subcontractor_work_item_id': subcontractorWorkItemId,
-            'department_id': departmentId,
-            'environment_number': environmentNumber,
-            'expires_at': expiresAt.toIso8601String(),
-            'confirmed_at': confirmedAt?.toIso8601String(),
-          })
+          .insert(obs.toJson())
           .select()
           .single();
 
-      return response;
+      return Observation.fromJson(response);
     } catch (e, stack) {
       print('Error al crear observación: $e');
       print('Stack trace: $stack');
@@ -37,35 +21,46 @@ class ObservationService {
     }
   }
 
-  Future<Map<String, dynamic>> updateObservation({
+  /// Obtener observaciones por departamento
+  Future<List<Observation>> getObservationsByDepartment(String departmentId) async {
+    try {
+      final response = await supabase
+          .from('observations')
+          .select()
+          .eq('departament_id', departmentId)
+          .order('created_at', ascending: true);
+
+      return List<Map<String, dynamic>>.from(response)
+          .map((json) => Observation.fromJson(json))
+          .toList();
+    } catch (e, stack) {
+      print('Error al obtener observaciones: $e');
+      print('Stack trace: $stack');
+      rethrow;
+    }
+  }
+
+  /// Actualizar una observación por campos opcionales
+  Future<Observation> updateObservation({
     required String observationId,
-    String? imageUrl,
     String? description,
-    DateTime? expiresAt,
-    DateTime? confirmedAt,
-    String? environmentId,
-    String? subcontractorWorkItemId,
+    String? imageUrl,
+    ObservationStatus? status,
   }) async {
     try {
-      final updateData = <String, dynamic>{};
-      if (imageUrl != null) updateData['image_url'] = imageUrl;
-      if (description != null) updateData['description'] = description;
-      if (expiresAt != null)
-        updateData['expires_at'] = expiresAt.toIso8601String();
-      if (confirmedAt != null)
-        updateData['confirmed_at'] = confirmedAt.toIso8601String();
-      if (environmentId != null) updateData['environment_id'] = environmentId;
-      if (subcontractorWorkItemId != null)
-        updateData['subcontractor_work_item_id'] = subcontractorWorkItemId;
+      final data = <String, dynamic>{};
+      if (description != null) data['description'] = description;
+      if (imageUrl != null) data['image_url'] = imageUrl;
+      if (status != null) data['status'] = statusToString(status);
 
       final response = await supabase
           .from('observations')
-          .update(updateData)
+          .update(data)
           .eq('id', observationId)
           .select()
           .single();
 
-      return response;
+      return Observation.fromJson(response);
     } catch (e, stack) {
       print('Error al actualizar observación: $e');
       print('Stack trace: $stack');
@@ -73,20 +68,37 @@ class ObservationService {
     }
   }
 
-  Future<bool> deleteObservation({required String observationId}) async {
+  /// Eliminar una observación
+  Future<bool> deleteObservation(String observationId) async {
     try {
-      final response =
-          await supabase.from('observations').delete().eq('id', observationId);
-
-      if (response == null || (response is List && response.isEmpty)) {
-        throw Exception('No se encontró la observación a eliminar.');
-      }
+      final response = await supabase
+          .from('observations')
+          .delete()
+          .eq('id', observationId);
 
       return true;
     } catch (e, stack) {
       print('Error al eliminar observación: $e');
       print('Stack trace: $stack');
       rethrow;
+    }
+  }
+
+  /// Obtener el último estado de una observación por departamento (para el color del bloque)
+  Future<ObservationStatus?> getLatestObservationStatus(String departmentId) async {
+    try {
+      final response = await supabase
+          .from('observations')
+          .select('status')
+          .eq('departament_id', departmentId)
+          .order('created_at', ascending: false)
+          .limit(1);
+
+      if (response.isEmpty) return null;
+      return parseStatus(response.first['status']);
+    } catch (e) {
+      print('Error al obtener último estado de observación: $e');
+      return null;
     }
   }
 }

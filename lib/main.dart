@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart'; // Necesario para locales
+import 'package:revi_dep/pages/crear_observacion_page.dart';
 import 'package:revi_dep/pages/login_page.dart';
-import 'package:revi_dep/screen/LoginScreen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {
@@ -42,6 +42,16 @@ class MyApp extends StatelessWidget {
       ),
       debugShowCheckedModeBanner: false,
       home: const LoginPage(), // Pantalla inicial
+      routes: {
+        '/crear-observacion': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as Map;
+          return CrearObservacionPage(
+            position: args['position'],
+            departmentId: args['departmentId'],
+          );
+        },
+      },
     );
   }
 }
+
