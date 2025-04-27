@@ -44,11 +44,29 @@ class _HomePageState extends State<HomePage> {
           .eq('id', user.id)
           .single();
 
+          if (profile == null) {
+      setState(() {
+        _errorMsg = "No se encontró el perfil del usuario.";
+        _isLoading = false;
+      });
+      return;
+    }
+
       final roleData = await supabase
           .from('roles')
           .select('name')
           .eq('id', profile['role_id'])
           .single();
+
+      
+    if (roleData == null) {
+      setState(() {
+        _errorMsg = "No se encontró el rol del usuario.";
+        _isLoading = false;
+      });
+      return;
+    }
+
 
       roleName = roleData['name'];
 
@@ -61,12 +79,26 @@ class _HomePageState extends State<HomePage> {
             .eq('real_estate_company_id', profile['real_estate_company_id'])
             .order('created_at', ascending: false);
       } else if (roleName == 'Inspector') {
+        final userProjects = await supabase
+          .from('user_profile_projects')
+          .select('project_id')
+          .eq('user_profile_id', profile['id']);
+
+
+
+         final projectIds = userProjects.map((e) => e['project_id']).toList();
+
+
+         if (projectIds.isEmpty) {
+        data = [];
+      } else {
         data = await supabase
-            .from('user_profile_projects')
-            .select('projects(*)')
-            .eq('user_profile_id', profile['id']);
-        data = data.map((e) => e['projects']).toList();
+            .from('projects')
+            .select()
+            .inFilter('id', projectIds)
+            .order('created_at', ascending: false);
       }
+  }
 
       final proyectosList = (data as List)
           .map((e) => Project.fromJson(e as Map<String, dynamic>))
@@ -91,71 +123,150 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Future<void> asignarProyectoAInspector(String projectId, String inspectorId) async {
-    try {
-      await supabase.from('user_profile_projects').insert({
-        'user_profile_id': inspectorId,
-        'project_id': projectId,
-      });
-    } catch (e, stack) {
-      print('Error al asignar proyecto: $e');
-      print(stack);
+Future<void> asignarProyectoAInspector(String projectId, String inspectorId) async {
+  try {
+    final response = await supabase.from('user_profile_projects').insert({
+      'user_profile_id': inspectorId,
+      'project_id': projectId,
+    }).select().single();
+
+    if (response == null) {
+      throw Exception('No se pudo asignar proyecto.');
     }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("✅ Proyecto asignado correctamente")),
+    );
+  } catch (e, stack) {
+    print('Error al asignar proyecto: $e');
+    print(stack);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("❌ Error asignando proyecto: $e")),
+    );
   }
+}
+
+
 
   Future<void> _mostrarInspectores(String projectId) async {
-    final user = supabase.auth.currentUser;
-    if (user == null) return;
+  final user = supabase.auth.currentUser;
+  if (user == null) return;
 
-    try {
-      final proyecto = await supabase
-          .from('projects')
-          .select('real_estate_company_id')
-          .eq('id', projectId)
-          .single();
+  try {
+    final proyecto = await supabase
+        .from('projects')
+        .select('real_estate_company_id')
+        .eq('id', projectId)
+        .single();
 
-      final companyId = proyecto['real_estate_company_id'];
+    final companyId = proyecto['real_estate_company_id'];
 
-      final perfiles = await supabase
-          .from('user_profiles')
-          .select('id, full_name')
-          .eq('role_id', '8b9569d8-bcab-41f5-90af-83d704ff1c0f') // Inspectores
-          .eq('real_estate_company_id', companyId);
+    // Obtener dinámicamente el role_id de 'Inspector'
+    final inspectorRole = await supabase
+        .from('roles')
+        .select('id')
+        .eq('name', 'Inspector')
+        .maybeSingle(); // <-- para evitar que falle si no encuentra
 
-      if (perfiles == null || perfiles.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("No hay inspectores disponibles.")),
-        );
-        return;
-      }
+    if (inspectorRole == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se encontró rol "Inspector"')),
+      );
+      return;
+    }
 
-      showModalBottomSheet(
-        context: context,
-        builder: (context) => ListView.builder(
-          itemCount: perfiles.length,
-          itemBuilder: (_, i) {
-            final inspector = perfiles[i];
-            return ListTile(
-              leading: const Icon(Icons.person),
-              title: Text(inspector['full_name'] ?? 'Inspector'),
-              onTap: () async {
-                Navigator.pop(context);
-                await asignarProyectoAInspector(projectId, inspector['id']);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Proyecto asignado")),
-                );
-              },
-            );
-          },
+    final inspectorRoleId = inspectorRole['id'];
+
+    final perfiles = await supabase
+        .from('user_profiles')
+        .select('id, full_name')
+        .eq('role_id', inspectorRoleId)
+        .eq('real_estate_company_id', companyId);
+
+    if (perfiles == null || perfiles.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("🚨 No hay inspectores disponibles.\n"
+              "- projectId: $projectId\n"
+              "- companyId: $companyId"),
         ),
       );
-    } catch (e) {
-      print('Error al mostrar inspectores: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Error al obtener inspectores.")),
-      );
+      return;
     }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 16),
+          const Text(
+            "Selecciona un Inspector",
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          ListView.builder(
+            shrinkWrap: true,
+            itemCount: perfiles.length,
+            itemBuilder: (_, i) {
+              final inspector = perfiles[i];
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Card(
+                  color: Colors.green.shade50,
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: ListTile(
+                    leading: const CircleAvatar(
+                      backgroundColor: Colors.green,
+                      child: Icon(Icons.person, color: Colors.white),
+                    ),
+                    title: Text(
+                      inspector['full_name'] ?? 'Inspector',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                    onTap: () async {
+                      Navigator.pop(context);
+                      await asignarProyectoAInspector(projectId, inspector['id']);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("✅ Proyecto asignado a ${inspector['full_name']}")),
+                      );
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
+  } catch (e) {
+    print('Error al mostrar inspectores: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("❌ Error al cargar inspectores.")),
+    );
   }
+}
+
+
+void _mostrarAlerta(String mensaje) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(mensaje),
+      backgroundColor: Colors.black87,
+      behavior: SnackBarBehavior.floating,
+      margin: const EdgeInsets.all(16),
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
