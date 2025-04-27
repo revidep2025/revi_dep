@@ -3,31 +3,28 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class VisitService {
   final SupabaseClient supabase = Supabase.instance.client;
 
-  Future<Map<String, dynamic>> createVisit({
-    required String? imageUrl,
-    required String? description,
-    required int progress,
-    required String observationId,
-  }) async {
-    try {
-      final response = await supabase
-          .from('visits')
-          .insert({
-            'image_url': imageUrl,
-            'description': description,
-            'progress': progress,
-            'observation_id': observationId,
-          })
-          .select()
-          .single();
-
-      return response;
-    } catch (e, stack) {
-      print('Error al crear visita: $e');
-      print('Stack trace: $stack');
-      rethrow;
-    }
+Future<void> createVisit({
+  required String? imageUrl,
+  required String description,
+  required int progress,
+  required String observationId,
+}) async {
+  try {
+    await supabase
+        .from('visits')
+        .insert({
+          'image_url': imageUrl,
+          'description': description,
+          'progress': progress,
+          'observation_id': observationId,
+          'created_at': DateTime.now().toIso8601String(),
+        })
+        .select(); // 👈 Esto hace que se complete bien el insert
+  } catch (e) {
+    print('Error creando visita: $e');
+    rethrow;
   }
+}
 
   Future<Map<String, dynamic>> updateVisit({
     required String visitId,
@@ -87,20 +84,19 @@ class VisitService {
     }
   }
 
-  Future<List<Map<String, dynamic>>> getAllVisitsByObservation(
-      {required String observationId}) async {
-    try {
-      final response = await supabase
-          .from('visits')
-          .select('*')
-          .eq('observation_id', observationId)
-          .order('created_at', ascending: false);
+Future<List<Map<String, dynamic>>> getAllVisitsByObservation({
+    required String observationId,
+  }) async {
+    final response = await supabase
+        .from('visits')
+        .select('*')
+        .eq('observation_id', observationId)
+        .order('created_at', ascending: false);
 
-      return List<Map<String, dynamic>>.from(response);
-    } catch (e, stack) {
-      print('Error al obtener visitas por observación: $e');
-      print('Stack trace: $stack');
-      rethrow;
+    if (response == null || response.isEmpty) {
+      return [];
     }
+
+    return List<Map<String, dynamic>>.from(response);
   }
 }

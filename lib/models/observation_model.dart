@@ -6,96 +6,61 @@ enum ObservationStatus {
   resuelta,
 }
 
-ObservationStatus parseStatus(String value) {
-  switch (value.toLowerCase()) {
-    case 'en_progreso':
-      return ObservationStatus.enProgreso;
-    case 'resuelta':
-      return ObservationStatus.resuelta;
-    case 'no_iniciada':
-    default:
-      return ObservationStatus.noIniciada;
-  }
-}
-
 String statusToString(ObservationStatus status) {
   switch (status) {
     case ObservationStatus.noIniciada:
-      return 'no_iniciada';
+      return "No iniciada";
     case ObservationStatus.enProgreso:
-      return 'en_progreso';
+      return "En progreso";
     case ObservationStatus.resuelta:
-      return 'resuelta';
+      return "Resuelta";
   }
 }
 
 class Observation {
   final String id;
-  final String departmentId;
-  final double x; // 0.0 - 1.0
-  final double y;
-  final String description;
   final String? imageUrl;
+  final String description;
+  final double x; // <- Coordenada X
+  final double y; // <- Coordenada Y
   final ObservationStatus status;
-  final DateTime createdAt;
+  final DateTime? createdAt;    // 🔥 Agregado
+  final DateTime? expiresAt;    // 🔥 Agregado
+  final DateTime? confirmedAt;  // 🔥 Agregado
 
   Observation({
     required this.id,
-    required this.departmentId,
+    this.imageUrl,
+    required this.description,
     required this.x,
     required this.y,
-    required this.description,
-    this.imageUrl,
     required this.status,
-    required this.createdAt,
+    this.createdAt,     // 🔥 Agregado
+    this.expiresAt,     // 🔥 Agregado
+    this.confirmedAt,   // 🔥 Agregado
   });
 
-  /// Usado para posicionar en Stack con dimensiones de la imagen
-  Offset get position => Offset(x, y);
+  factory Observation.fromMap(Map<String, dynamic> map) {
+  return Observation(
+    id: map['id'] as String,
+    imageUrl: map['image_url'] as String?,
+    description: map['description'] as String,
+    x: (map['x'] as num).toDouble(),
+    y: (map['y'] as num).toDouble(),
+    status: _parseStatus(map['status']), // <-- CAMBIA ESTO
 
-  factory Observation.fromJson(Map<String, dynamic> json) {
-    return Observation(
-      id: json['id'] ?? '',
-      departmentId: json['department_id'] ?? '',
-      x: (json['x'] as num).toDouble(),
-      y: (json['y'] as num).toDouble(),
-      description: json['description'] ?? '',
-      imageUrl: json['image_url'],
-      status: parseStatus(json['status'] ?? 'no_iniciada'),
-      createdAt: DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
-    );
-  }
+    // 🔥 Agregamos mapeo de fechas
+      createdAt: map['created_at'] != null ? DateTime.parse(map['created_at']) : null,
+      expiresAt: map['expires_at'] != null ? DateTime.parse(map['expires_at']) : null,
+      confirmedAt: map['confirmed_at'] != null ? DateTime.parse(map['confirmed_at']) : null,
+  );
+}
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'department_id': departmentId,
-      'x': x,
-      'y': y,
-      'description': description,
-      'image_url': imageUrl,
-      'status': statusToString(status),
-      'created_at': createdAt.toIso8601String(),
-    };
-  }
+static ObservationStatus _parseStatus(dynamic statusValue) {
+  if (statusValue == null) return ObservationStatus.noIniciada;
+  if (statusValue == 'resuelta') return ObservationStatus.resuelta;
+  if (statusValue == 'en_progreso') return ObservationStatus.enProgreso;
+  return ObservationStatus.noIniciada;
+}
 
-  /// Para crear una nueva observación desde UI
-  static Observation createNew({
-    required String departmentId,
-    required Offset position,
-    required String description,
-    required ObservationStatus status,
-    String? imageUrl,
-  }) {
-    return Observation(
-      id: '', // se asignará en Supabase
-      departmentId: departmentId,
-      x: position.dx,
-      y: position.dy,
-      description: description,
-      status: status,
-      imageUrl: imageUrl,
-      createdAt: DateTime.now(),
-    );
-  }
 }

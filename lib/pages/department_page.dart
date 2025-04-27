@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:revi_dep/models/department_model.dart';
 import 'package:revi_dep/pages/department_map_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
 import 'create_department_page.dart';
 
 class DepartmentPage extends StatefulWidget {
@@ -16,6 +15,7 @@ class DepartmentPage extends StatefulWidget {
 
 class _DepartmentPageState extends State<DepartmentPage> {
   List<Department> departments = [];
+  Map<String, Color> departmentColors = {}; 
   int? selectedFloor;
   bool isLoading = true;
 
@@ -41,6 +41,31 @@ class _DepartmentPageState extends State<DepartmentPage> {
       departments = fetched;
       isLoading = false;
     });
+
+    _loadDepartmentColors(fetched);
+  }
+
+  Future<void> _loadDepartmentColors(List<Department> depts) async {
+    for (var dept in depts) {
+      final obsResponse = await Supabase.instance.client
+          .from('observations')
+          .select('status')
+          .eq('departament_id', dept.id);
+
+      final observations = (obsResponse as List).map((e) => e['status'] as String?).toList();
+
+      if (observations.isEmpty) {
+        departmentColors[dept.id] = Colors.grey; // Sin observaciones
+      } else if (observations.every((status) => status == 'resuelta')) {
+        departmentColors[dept.id] = Colors.green;
+      } else if (observations.any((status) => status == 'en_progreso')) {
+        departmentColors[dept.id] = Colors.orange;
+      } else {
+        departmentColors[dept.id] = Colors.red;
+      }
+    }
+
+    setState(() {}); // Forzar que se actualicen los colores
   }
 
   List<Department> _filteredDepartments() {
@@ -92,26 +117,29 @@ class _DepartmentPageState extends State<DepartmentPage> {
                     itemCount: _filteredDepartments().length,
                     itemBuilder: (_, index) {
                       final dept = _filteredDepartments()[index];
+                      final color = departmentColors[dept.id] ?? Colors.grey; // Color de fondo
+
                       return GestureDetector(
                         onTap: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (_) => DepartmentMapPage(
-                                    departmentId: dept.id,
-                                    imageUrl: dept.planImageUrl,
-                                  ),
+                                departmentId: dept.id,
+                                imageUrl: dept.planImageUrl,
+                                unitCode: dept.unitCode.toString(),
+                              ),
                             ),
                           );
                         },
                         child: Container(
                           decoration: BoxDecoration(
-                            color: Colors.red.shade300,
+                            color: color,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Center(
                             child: Text(
-                              'Unidad ${dept.unitCode}',
+                              'Depart: ${dept.unitCode}',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 18,
@@ -122,7 +150,6 @@ class _DepartmentPageState extends State<DepartmentPage> {
                         ),
                       );
                     },
-
                   ),
                 ),
               ],
@@ -139,8 +166,8 @@ class _DepartmentPageState extends State<DepartmentPage> {
           _loadDepartments();
         },
         child: const Icon(Icons.add),
+        tooltip: 'Crear Departamento',
       ),
     );
   }
 }
-
